@@ -2,117 +2,121 @@
 #include <string>
 #include <map>
 #include "tstack.h"
-int GetPrior(char ch) {
-    std::pair<char, int> prior[6];
-    switch (ch) {
-    case '(':
-        prior[0].first = '(';
-        prior[0].second = 0;
-    case ')':
-        prior[1].first = ')';
-        prior[1].second = 1;
-    case '+':
-        prior[2].first = '+';
-        prior[2].second = 2;
-    case '-':
-        prior[3].first = '-';
-        prior[3].second = 2;
-    case '*':
-        prior[4].first = '*';
-        prior[4].second = 3;
-    case '/':
-        prior[5].first = '/';
-        prior[5].second = 3;
-    }
-    int prior1 = -1;
-    for (int j = 0; j < 6; ++j) {
-        if (ch == prior[j].first) {
-            prior1 = prior[j].second;
-            break;
-        }
-    }
-    return prior1;
-}
-int count1(const int& n1, const int& n2, const int& oper) {
-    switch (oper) {
-        default:
-            break;
-        case '+': return n1 + n2;
-        case '-': return n1 - n2;
-        case '*': return n1 * n2;
-        case '/': return n1 / n2;
-    }
-    return 0;
-}
-std::string Space(const std::string& s) {
-  if (s.length() <= 2)
-    return s;
-  int n = 2 - s.length() % 2;
-  std::string r(s, 0, n);
-  for (auto i = s.begin() + n; i != s.end();) {
-    r += ' ';
-    r += *i++;
+
+int getPriority(char op) {
+  std::pair<char, int> prioritet[6];
+  switch (op) {
+    case'(':
+      prioritet[0].first = '(';
+      prioritet[0].second = 0;
+    case')':
+      prioritet[1].first = ')';
+      prioritet[1].second = 1;
+    case'+':
+      prioritet[2].first = '+';
+      prioritet[2].second = 2;
+    case'-':
+      prioritet[3].first = '-';
+      prioritet[3].second = 2;
+    case'*':
+      prioritet[4].first = '*';
+      prioritet[4].second = 3;
+    case'/':
+      prioritet[5].first = '/';
+      prioritet[5].second = 3;
   }
-  return r;
+  int priority = -1;
+  for (int j = 0; j < 6; ++j) {
+    if (op == prioritet[j].first) {
+      priority = prioritet[j].second;
+      break;
+    }
+  }
+  return priority;
 }
+
+std::string mirOne(const std::string& a) {
+  if (a.length() <= 2) return a;
+  int b = 2 - a.length() % 2;
+  std::string d(a, 0, b);
+  for (auto it = a.begin() + b; it != a.end();) {
+    d += ' '; d += *it++;;
+  }
+  return d;
+}
+
+
 std::string infx2pstfx(std::string inf) {
-  std::string pstfx;
-  TStack<char, 100> stChar;
-  for (auto& operation : inf) {
-    int priority = GetPrior(operation);
+  std::string s;
+  Tstack<char, 100> stack1;
+  for (auto& op : inf) {
+    int priority = getPriority(op);
     if (priority == -1) {
-      pstfx += operation;
+      s += op;
     } else {
-      if (stChar.get() < priority || priority == 0 || stChar.isEmpty()) {
-        stChar.push(operation);
-      } else if (operation == ')') {
-        char ch = stChar.get();
-        while (GetPrior(ch) >= priority) {
-          pstfx += ch;
-          stChar.pop();
-          ch = stChar.get();
+      if (stack1.get() < priority || priority == 0 || stack1.isEmpty()) {
+        stack1.push(op);
+      } else if (op == ')') {
+        char sm = stack1.get();
+        while (getPriority(sm) >= priority) {
+          s += sm;
+          stack1.pop();
+          sm = stack1.get();
         }
-        stChar.pop();
+        stack1.pop();
       } else {
-        char ch = stChar.get();
-        while (GetPrior(ch) >= priority) {
-          pstfx += ch;
-          stChar.pop();
-          ch = stChar.get();
+        char sm = stack1.get();
+        while (getPriority(sm) >= priority) {
+          s += sm;
+          stack1.pop();
+          sm = stack1.get();
         }
-        stChar.push(operation);
+        stack1.push(op);
       }
     }
   }
-  while (!stChar.isEmpty()) {
-    pstfx += stChar.get();
-    stChar.pop();
+  while (!stack1.isEmpty()) {
+    s += stack1.get();
+    stack1.pop();
   }
-  pstfx = Space(pstfx);
-  return pstfx;
+  s = mirOne(s);
+  return s;
 }
-  int eval(std::string prf) {
-    TStack <int, 100> stInt;
-    std::string r = "";
-    for (size_t i = 0; i < prf.size(); i++) {
-        if (GetPrior(prf[i]) == -1) {
-            if (prf[i] == ' ') {
-                continue;
-            } else if (isdigit(prf[i + 1])) {
-                r += prf[i];
-                continue;
-            } else {
-                r += prf[i];
-                stInt.push(atoi(r.c_str()));
-                r = "";
-            }
-        } else {
-          int b = stInt.get();
-          stInt.pop();
-          int a = stInt.get();
-          stInt.pop();
-          stInt.push(count1(a, b, prf[i]));
-        }
+
+int count(const int& a, const int& b, const int& operation) {
+  switch (operation) {
+    default:
+      break;
+    case'+': return a + b;
+    case'-': return a - b;
+    case'*': return a * b;
+    case'/': return a / b;
   }
-  return stInt.get();
+  return 0;
+}
+
+int eval(std::string pref) {
+  Tstack<int, 100> stack1;
+  std::string num = "";
+  for (size_t i = 0; i < pref.size(); i++) {
+    if (getPriority(pref[i]) == -1) {
+      if (pref[i] == ' ') {
+        continue;
+      } else if (isdigit(pref[i + 1])) {
+        num += pref[i];
+        continue;
+      } else {
+        num += pref[i];
+        stack1.push(atoi(num.c_str()));
+        num = "";
+      }
+    } else {
+      int n = stack1.get();
+      stack1.pop();
+      int k = stack1.get();
+      stack1.pop();
+      stack1.push(count(k, n, pref[i]));
+    }
+  }
+  return stack1.get();
 }
