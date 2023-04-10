@@ -2,121 +2,154 @@
 #include <string>
 #include <map>
 #include "tstack.h"
-
-int getPriority(char op) {
-  std::pair<char, int> prioritet[6];
-  switch (op) {
-    case'(':
-      prioritet[0].first = '(';
-      prioritet[0].second = 0;
-    case')':
-      prioritet[1].first = ')';
-      prioritet[1].second = 1;
+TStack <char, 100> charstack;
+TStack <char, 100> vixod;
+TStack <int, 100> intstack;
+int getPrior(char inf) {
+    switch (inf) {
+    case '(':
+        return 0;
+        break;
+    case ')':
+        return 1;
+        break;
     case'+':
-      prioritet[2].first = '+';
-      prioritet[2].second = 2;
+        return 2;
+        break;
     case'-':
-      prioritet[3].first = '-';
-      prioritet[3].second = 2;
+        return 2;
+        break;
     case'*':
-      prioritet[4].first = '*';
-      prioritet[4].second = 3;
+        return 3;
+        break;
     case'/':
-      prioritet[5].first = '/';
-      prioritet[5].second = 3;
-  }
-  int priority = -1;
-  for (int j = 0; j < 6; ++j) {
-    if (op == prioritet[j].first) {
-      priority = prioritet[j].second;
-      break;
-    }
-  }
-  return priority;
-}
-
-std::string mirOne(const std::string& a) {
-  if (a.length() <= 2) return a;
-  int b = 2 - a.length() % 2;
-  std::string d(a, 0, b);
-  for (auto it = a.begin() + b; it != a.end();) {
-    d += ' '; d += *it++;;
-  }
-  return d;
-}
-
-
-std::string infx2pstfx(std::string inf) {
-  std::string s;
-  Tstack<char, 100> stack1;
-  for (auto& op : inf) {
-    int priority = getPriority(op);
-    if (priority == -1) {
-      s += op;
-    } else {
-      if (stack1.get() < priority || priority == 0 || stack1.isEmpty()) {
-        stack1.push(op);
-      } else if (op == ')') {
-        char sm = stack1.get();
-        while (getPriority(sm) >= priority) {
-          s += sm;
-          stack1.pop();
-          sm = stack1.get();
-        }
-        stack1.pop();
-      } else {
-        char sm = stack1.get();
-        while (getPriority(sm) >= priority) {
-          s += sm;
-          stack1.pop();
-          sm = stack1.get();
-        }
-        stack1.push(op);
-      }
-    }
-  }
-  while (!stack1.isEmpty()) {
-    s += stack1.get();
-    stack1.pop();
-  }
-  s = mirOne(s);
-  return s;
-}
-
-int count(const int& a, const int& b, const int& operation) {
-  switch (operation) {
+        return 3;
+        break;
     default:
-      break;
-    case'+': return a + b;
-    case'-': return a - b;
-    case'*': return a * b;
-    case'/': return a / b;
-  }
-  return 0;
+        return -1;
+        break;
+    }
+}
+std::string infx2pstfx(std::string inf) {
+    int count = 0, count1 = 0, count2 = 0;
+    std::string res;
+    std::string exit;
+    for (auto c : inf) {
+        count += 1;
+    }
+    for (int i = 0; i < count; ++i) {
+        int prior = getPrior(inf[i]);
+        char op = inf[i];
+        if (prior == -1) {
+            vixod.push(inf[i]);
+        } else {
+            if (prior > getPrior(charstack.peek()) || charstack.isEmpty()) {
+                charstack.push(op);
+            } else if (prior == 0) {
+                charstack.push(op);
+            } else if (op == ')') {
+                while (prior <= getPrior(charstack.peek())) {
+                    if (charstack.peek() != '(' && charstack.peek() != ')') {
+                        vixod.push(charstack.peek());
+                    }
+                    charstack.pop();
+                }
+                charstack.pop();
+            } else {
+                while (prior <= getPrior(charstack.peek())) {
+                    if (charstack.peek() != '(' && charstack.peek() != ')') {
+                        vixod.push(charstack.peek());
+                    }
+                    charstack.pop();
+                }
+                charstack.push(op);
+            }
+        }
+    }
+    while (!charstack.isEmpty()) {
+        if (charstack.peek() != '(' && charstack.peek() != ')') {
+            vixod.push(charstack.peek());
+        }
+        charstack.pop();
+    }
+    res.resize(count);
+    auto it = res.rbegin();
+    while (!vixod.isEmpty()) {
+        *it = vixod.peek();
+        vixod.pop();
+        ++it;
+        count1 += 1;
+    }
+    for (auto a : res) {
+        if (res.find(' ')) {
+            count2 += 1;
+        }
+    }
+    int get = count2 - count1;
+    for (int i = get; i < count; ++i) {
+        char ex = res[i];
+        exit.push_back(ex);
+        exit.push_back(' ');
+    }
+    exit.pop_back();
+    return exit;
 }
 
-int eval(std::string pref) {
-  Tstack<int, 100> stack1;
-  std::string num = "";
-  for (size_t i = 0; i < pref.size(); i++) {
-    if (getPriority(pref[i]) == -1) {
-      if (pref[i] == ' ') {
-        continue;
-      } else if (isdigit(pref[i + 1])) {
-        num += pref[i];
-        continue;
-      } else {
-        num += pref[i];
-        stack1.push(atoi(num.c_str()));
-        num = "";
-      }
-    } else {
-      int n = stack1.get();
-      stack1.pop();
-      int k = stack1.get();
-      stack1.pop();
-      stack1.push(count(k, n, pref[i]));
+int operat(char oper) {
+    int a = intstack.peek();
+    intstack.pop();
+    int b = intstack.peek();
+    intstack.pop();
+    switch (oper) {
+    case '-':
+        return b - a;
+        break;
+    case '+':
+        return b + a;
+        break;
+    case '*':
+        return b * a;
+        break;
+    case '/':
+        return b / a;
+        break;
+    default:
+        break;
     }
-  }
-  return stack1.get();
+    return 0;
+}
+int eval(std::string pref) {
+    int count = 0;
+    for (auto c : pref) {
+        count += 1;
+    }
+    for (int i = 0; i < count; ++i) {
+        if (pref[i] >= 48 && pref[i] <= 57) {
+            if (pref[i] == 48)
+                intstack.push(0);
+            if (pref[i] == 49)
+                intstack.push(1);
+            if (pref[i] == 50)
+                intstack.push(2);
+            if (pref[i] == 51)
+                intstack.push(3);
+            if (pref[i] == 52)
+                intstack.push(4);
+            if (pref[i] == 53)
+                intstack.push(5);
+            if (pref[i] == 54)
+                intstack.push(6);
+            if (pref[i] == 55)
+                intstack.push(7);
+            if (pref[i] == 56)
+                intstack.push(8);
+            if (pref[i] == 57)
+                intstack.push(9);
+        } else if (pref[i] >= 42 && pref[i] <= 47) {
+            char oper = pref[i];
+            int c = operat(oper);
+            intstack.push(c);
+        }
+    }
+    return intstack.peek();
 }
